@@ -97,8 +97,9 @@ fn main() -> Result<(), Box<dyn Error>> {
                 prob: *prob,
             }
         })
-        .map(|bbox| Rect::at(bbox.x, bbox.y).of_size(bbox.width, bbox.height))
-        .for_each(|rect| draw_hollow_rect_mut(&mut output_image, rect, LINE_COLOR));
+        .map(|bbox| Rect::at(bbox.x, bbox.y).of_size(bbox.width, bbox.height)) // Map Bbox into Rect
+        .for_each(|rect| draw_hollow_rect_mut(&mut output_image, rect, LINE_COLOR)); // Draw rects
+
     // Save output
     output_image.save(&opt.output)?;
     Ok(())
