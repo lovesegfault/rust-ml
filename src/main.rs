@@ -1,6 +1,5 @@
 use image::{GenericImageView, Rgba};
-use imageproc::drawing::draw_hollow_rect_mut;
-use imageproc::rect::Rect;
+use imageproc::{drawing::draw_hollow_rect_mut, rect::Rect};
 use itertools::Itertools;
 use structopt::StructOpt;
 use tensorflow::{Graph, ImportGraphDefOptions, Session, SessionOptions, SessionRunArgs, Tensor};
