@@ -10,3 +10,22 @@ imageproc = "0.18.0"
 itertools = "0.8.0"
 structopt = "0.2.15"
 tensorflow = "0.13.0"
+
+[profile.release]
+incremental = false
+opt-level = 3
+debug = false
+rpath = false
+lto = true
+debug-assertions = false
+codegen-units = 1
+panic = 'unwind'
+
+[profile.dev]
+incremental = true
+opt-level = 2
+debug = true
+lto = false
+codegen-units = 20
+rpath = true
+

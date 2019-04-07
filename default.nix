@@ -13,6 +13,7 @@ let
   rustML = with nixpkgs; stdenv.mkDerivation {
     name = "rust-ml";
     buildInputs = [
+      cargo-edit
       rustStable
       gcc-unwrapped.lib
       openssl
