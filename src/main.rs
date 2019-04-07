@@ -1,10 +1,16 @@
-use image::GenericImageView;
+use image::{GenericImageView, Rgba};
+use imageproc::drawing::draw_hollow_rect_mut;
+use imageproc::rect::Rect;
 use itertools::Itertools;
 use structopt::StructOpt;
 use tensorflow::{Graph, ImportGraphDefOptions, Session, SessionOptions, SessionRunArgs, Tensor};
 
 use std::error::Error;
 use std::path::PathBuf;
+
+const LINE_COLOR: Rgba<u8> = Rgba {
+    data: [0, 255, 0, 0],
+};
 
 #[derive(StructOpt)]
 struct Opt {
@@ -16,10 +22,10 @@ struct Opt {
 
 #[derive(Copy, Clone, Debug)]
 struct BBox {
-    pub y1: f32,
-    pub x1: f32,
-    pub y2: f32,
-    pub x2: f32,
+    pub y: i32,
+    pub x: i32,
+    pub width: u32,
+    pub height: u32,
     pub prob: f32,
 }
 
@@ -46,7 +52,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     // Load image into a tensor
     let input = Tensor::new(&[input_image.height() as u64, input_image.width() as u64, 3])
         .with_values(&flattened)?;
-    let mut session = Session::new(&SessionOptions::new(), &graph)?;
+    let session = Session::new(&SessionOptions::new(), &graph)?;
     // mtcnn model inputs
     let min_size = Tensor::new(&[]).with_values(&[40_f32])?;
     let thresholds = Tensor::new(&[3]).with_values(&[0.6_f32, 0.7_f32, 0.7_f32])?;
@@ -70,22 +76,26 @@ fn main() -> Result<(), Box<dyn Error>> {
     // Save results
     let bbox_res: Tensor<f32> = args.fetch(bbox)?;
     let prob_res: Tensor<f32> = args.fetch(prob)?;
-    // Vectorize bboxes
-    let bboxes: Vec<BBox> = bbox_res
+    // Copy input image
+    let mut output_image = input_image.clone();
+    // Draw bboxes
+    bbox_res
         .into_iter()
         .tuples::<(_, _, _, _)>() // Chunk the iterator into 4-tuples
         .zip(prob_res.into_iter()) // Zip it with the probabilities
         .map(|((y1, x1, y2, x2), prob)| {
             // Map values into struct
             BBox {
-                y1: *y1,
-                x1: *x1,
-                y2: *y2,
-                x2: *x2,
+                y: *y1 as i32,
+                x: *x1 as i32,
+                width: (*x2 - *x1) as u32,
+                height: (*y2 - *y1) as u32,
                 prob: *prob,
             }
         })
-        .collect();
-    println!("BBox Length: {}, BBoxes: {:#?}", bboxes.len(), bboxes);
+        .map(|bbox| Rect::at(bbox.x, bbox.y).of_size(bbox.width, bbox.height))
+        .for_each(|rect| draw_hollow_rect_mut(&mut output_image, rect, LINE_COLOR));
+    // Save output
+    output_image.save(&opt.output)?;
     Ok(())
 }
