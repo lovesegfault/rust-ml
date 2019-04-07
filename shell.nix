@@ -1,1 +1,1 @@
-(import ./.).rust-ml
+(import ./.).rustML
