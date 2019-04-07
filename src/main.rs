@@ -29,9 +29,9 @@ struct BBox {
     pub prob: f32,
 }
 
-macro_rules! flatten_hack {
+macro_rules! own {
     ($x: expr) => (std::iter::once($x));
-    ($x: expr, $($y: expr),+) => (flatten_hack!($x).chain(flatten_hack!($($y),+)));
+    ($x: expr, $($y: expr),+) => (own!($x).chain(own!($($y),+)));
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
@@ -46,7 +46,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     // Flatten image
     let flattened: Vec<f32> = input_image
         .pixels()
-        .flat_map(|(_, _, rgb)| flatten_hack!(rgb[2], rgb[1], rgb[0]))
+        .flat_map(|(_, _, rgb)| own!(rgb[2], rgb[1], rgb[0]))
         .map(|i| f32::from(i))
         .collect();
     // Load image into a tensor
