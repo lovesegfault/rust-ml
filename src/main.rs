@@ -47,11 +47,15 @@ fn main() -> Result<(), Box<dyn Error>> {
     let flattened: Vec<f32> = input_image
         .pixels()
         .flat_map(|(_, _, rgb)| flatten_hack!(rgb[2], rgb[1], rgb[0]))
-        .map(|i| i as f32)
+        .map(|i| f32::from(i))
         .collect();
     // Load image into a tensor
-    let input = Tensor::new(&[input_image.height() as u64, input_image.width() as u64, 3])
-        .with_values(&flattened)?;
+    let input = Tensor::new(&[
+        u64::from(input_image.height()),
+        u64::from(input_image.width()),
+        3,
+    ])
+    .with_values(&flattened)?;
     let session = Session::new(&SessionOptions::new(), &graph)?;
     // mtcnn model inputs
     let min_size = Tensor::new(&[]).with_values(&[40_f32])?;
@@ -80,9 +84,9 @@ fn main() -> Result<(), Box<dyn Error>> {
     let mut output_image = input_image.clone();
     // Draw bboxes
     bbox_res
-        .into_iter()
+        .iter()
         .tuples::<(_, _, _, _)>() // Chunk the iterator into 4-tuples
-        .zip(prob_res.into_iter()) // Zip it with the probabilities
+        .zip(prob_res.iter()) // Zip it with the probabilities
         .map(|((y1, x1, y2, x2), prob)| {
             // Map values into struct
             BBox {
